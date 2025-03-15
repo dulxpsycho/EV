@@ -4,7 +4,7 @@ import 'dart:typed_data';
 
 import 'package:ev_/AddFav.dart';
 import 'package:ev_/AddWall.dart';
-import 'package:ev_/Partner.dart';
+
 import 'package:ev_/aboutus.dart';
 import 'package:ev_/addEv.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +13,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:location/location.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 void main() {
   runApp(const MyApp());
