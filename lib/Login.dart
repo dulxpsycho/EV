@@ -43,18 +43,19 @@ class LoginPage extends StatelessWidget {
                     children: [
                       Text(
                         'LIGHT EV',
-                        style: GoogleFonts.poppins(
-                          fontSize: 36,
+                        style: GoogleFonts.tektur(
+                          fontSize: 40,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white, // White text for logo
+                          color: const Color.fromARGB(
+                              255, 255, 255, 255), // White text for logo
                           letterSpacing: 1.5,
                         ),
                       ),
                       const SizedBox(width: 10),
                       const Icon(
-                        Icons.electric_car_rounded,
-                        size: 40,
-                        color: Colors.white, // White icon
+                        Icons.flash_on_outlined,
+                        size: 70,
+                        color: Color.fromARGB(255, 255, 255, 255), // White icon
                       ),
                     ],
                   ),

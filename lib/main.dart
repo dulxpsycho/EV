@@ -1,7 +1,7 @@
 // main.dart
 
 import 'package:ev_/Home.dart';
-import 'package:ev_/Login.dart';
+import 'package:ev_/flash.dart';
 
 import 'package:flutter/material.dart';
 
@@ -17,9 +17,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       initialRoute: 'Login',
-      home: LoginPage(),
+      home: const MyFlash(),
       routes: {
-        'Login': (context) => LoginPage(),
+        'Login': (context) => const MyFlash(),
         'Home': (context) => const MyHome(),
       },
     );

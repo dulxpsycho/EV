@@ -15,6 +15,17 @@ class _AddWallState extends State<AddWall> {
   final List<String> _transactionHistory = [];
 
   void _addMoney() {
+    if (_amountToAdd <= 0) {
+      // Display a snack bar message for invalid amount
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Amount must be greater than zero!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _balance += _amountToAdd;
       _transactionHistory.insert(
@@ -162,23 +173,21 @@ class _AddWallState extends State<AddWall> {
               const SizedBox(height: 12),
 
               // Expanded ListView for Transaction History
-              Expanded(
-                child: _transactionHistory.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No transactions yet',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      )
-                    : ListView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: _transactionHistory.length,
-                        itemBuilder: (context, index) {
-                          return _buildTransactionItem(
-                              _transactionHistory[index]);
-                        },
+              _transactionHistory.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No transactions yet',
+                        style: TextStyle(color: Colors.grey),
                       ),
-              ),
+                    )
+                  : ListView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: _transactionHistory.length,
+                      itemBuilder: (context, index) {
+                        return _buildTransactionItem(
+                            _transactionHistory[index]);
+                      },
+                    ),
             ],
           ),
         ),
