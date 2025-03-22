@@ -1,5 +1,7 @@
 // firbase/auth/auth.dart
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:ev_/model/usermodel.dart';
+import 'package:ev_/firbase/db/db.dart';
 
 String verificationID = '';
 
@@ -30,9 +32,10 @@ class AuthService {
       UserCredential userCredential =
           await firebaseAuth.signInWithCredential(credential);
       User? user = userCredential.user;
+      UserModel userModel = UserModel(phonenumber: user!.phoneNumber ?? '');
       if (user != null) {
-        // QuerySnapshot? snapshot =
-        //     await DataBaseClass(uid: user.uid).gettingUserData();
+        final result =
+            await DataBaseHandler(uid: user.uid).saveUserData(userModel);
         // log('${user.email}::${user.phoneNumber}');
         // if (snapshot == null) {
         //   await DataBaseClass(uid: user.uid).saveUserdata(
