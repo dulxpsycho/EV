@@ -1,7 +1,9 @@
-// firbase/auth/auth.dart
+// firebase/auth/auth.dart
+import 'package:ev_/firbase/db/db.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:ev_/model/usermodel.dart';
-import 'package:ev_/firbase/db/db.dart';
+import 'package:flutter/material.dart';
+import 'package:ev_/notification/notification.dart';
 
 class AuthService {
   static final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -11,7 +13,7 @@ class AuthService {
     String phoneNumber,
     Function(bool) updateLoading,
     Function(bool) updateOtpAllowed,
-    Function(String) onError,
+    BuildContext context,
   ) async {
     try {
       updateLoading(true);
@@ -20,17 +22,28 @@ class AuthService {
         phoneNumber: '+91$phoneNumber',
         verificationCompleted: (PhoneAuthCredential credential) async {
           // Auto-verification completed (usually on Android)
-          await _signInWithCredential(credential);
+          bool success = await _signInWithCredential(credential, context);
+          if (success && context.mounted) {
+            await NotificationHandler.snakBarSuccess(
+                message: 'Authentication successful 👋😎', context: context);
+          }
           updateLoading(false);
         },
         verificationFailed: (FirebaseAuthException e) {
+          if (context.mounted) {
+            NotificationHandler.snakBarWarning(
+                message: '${e.message} 😖', context: context);
+          }
           updateLoading(false);
-          onError('Verification failed: ${e.message}');
         },
         codeSent: (String verificationId, int? resendToken) {
           _verificationId = verificationId;
           updateLoading(false);
           updateOtpAllowed(true);
+          if (context.mounted) {
+            NotificationHandler.snakBarSuccess(
+                message: 'OTP sent successfully 👋😎', context: context);
+          }
         },
         codeAutoRetrievalTimeout: (String verificationId) {
           _verificationId = verificationId;
@@ -39,21 +52,28 @@ class AuthService {
       );
     } catch (e) {
       updateLoading(false);
-      onError('Error sending OTP: $e');
+      if (context.mounted) {
+        NotificationHandler.snakBarWarning(
+            message: 'Error sending OTP: $e 😖', context: context);
+      }
     }
   }
 
   Future<bool> verifyOtp(
     String otpCode,
     Function(bool) updateLoading,
-    Function(String) onError,
+    BuildContext context,
   ) async {
     try {
       updateLoading(true);
 
       if (_verificationId.isEmpty) {
         updateLoading(false);
-        onError('Verification session expired. Please try again.');
+        if (context.mounted) {
+          NotificationHandler.snakBarWarning(
+              message: 'Verification session expired. Please try again 😖',
+              context: context);
+        }
         return false;
       }
 
@@ -62,15 +82,19 @@ class AuthService {
         smsCode: otpCode,
       );
 
-      return await _signInWithCredential(credential);
+      return await _signInWithCredential(credential, context);
     } catch (e) {
       updateLoading(false);
-      onError('OTP verification failed: $e');
+      if (context.mounted) {
+        NotificationHandler.snakBarWarning(
+            message: 'OTP verification failed: $e 😖', context: context);
+      }
       return false;
     }
   }
 
-  Future<bool> _signInWithCredential(PhoneAuthCredential credential) async {
+  Future<bool> _signInWithCredential(
+      PhoneAuthCredential credential, BuildContext context) async {
     try {
       UserCredential userCredential =
           await _firebaseAuth.signInWithCredential(credential);
@@ -79,19 +103,28 @@ class AuthService {
       if (user != null) {
         UserModel userModel = UserModel(phonenumber: user.phoneNumber ?? '');
         await DataBaseHandler(uid: user.uid).saveUserData(userModel);
+
+        if (context.mounted) {
+          NotificationHandler.snakBarSuccess(
+              message: 'Account authenticated successfully 👋😎',
+              context: context);
+        }
         return true;
+      }
+
+      if (context.mounted) {
+        NotificationHandler.snakBarWarning(
+            message: 'Authentication failed: user is null 😖',
+            context: context);
       }
       return false;
     } catch (e) {
+      if (context.mounted) {
+        NotificationHandler.snakBarWarning(
+            message: 'Authentication failed: ${e.toString()} 😖',
+            context: context);
+      }
       throw Exception('Sign-in failed: $e');
     }
-  }
-
-  User? getCurrentUser() {
-    return _firebaseAuth.currentUser;
-  }
-
-  Future<void> signOut() async {
-    await _firebaseAuth.signOut();
   }
 }
