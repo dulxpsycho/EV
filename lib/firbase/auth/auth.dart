@@ -1,4 +1,6 @@
 // firbase/auth/auth.dart
+import 'package:ev_/firbase/db/db.dart';
+import 'package:ev_/model/usermodel.dart' as user;
 import 'package:firebase_auth/firebase_auth.dart';
 
 String verificationID = '';
@@ -30,28 +32,31 @@ class AuthService {
       UserCredential userCredential =
           await firebaseAuth.signInWithCredential(credential);
       User? user = userCredential.user;
+      final UserModel = user.UserModel(
+        phonenumber: user?.phoneNumber ?? '',
+      );
       if (user != null) {
-        // QuerySnapshot? snapshot =
-        //     await DataBaseClass(uid: user.uid).gettingUserData();
-        // log('${user.email}::${user.phoneNumber}');
-        // if (snapshot == null) {
-        //   await DataBaseClass(uid: user.uid).saveUserdata(
-        //       phoneNumber: user.phoneNumber!, email: user.email ?? '');
-        //   sharedController.saveUserUIDStatus(user.uid);
-        //   Get.offAll(() => const DashboardScrn());
-        //   loginScrnGetxController.isLoadingFN(isLoad: false);
+        final result =
+            await DataBaseHandler(uid: user.uid).saveUserData(UserModel);
+        //log('${user.email}::${user.phoneNumber}');
+        //if (snapshot == null) {
+        // await DataBaseClass(uid: user.uid).saveUserdata(
+        //    phoneNumber: user.phoneNumber!, email: user.email ?? '');
+        // sharedController.saveUserUIDStatus(user.uid);
+        // Get.offAll(() => const DashboardScrn());
+        // loginScrnGetxController.isLoadingFN(isLoad: false);
         // } else {
-        //   sharedController.saveUserUIDStatus(user.uid);
-        //   loginScrnGetxController.isLoadingFN(isLoad: false);
-        //   Get.offAll(() => const DashboardScrn());
+        //  sharedController.saveUserUIDStatus(user.uid);
+        //  loginScrnGetxController.isLoadingFN(isLoad: false);
+        //  Get.offAll(() => const DashboardScrn());
         // }
       }
     } catch (e) {
-      // loginScrnGetxController.isLoadingFN(isLoad: false);
+      //loginScrnGetxController.isLoadingFN(isLoad: false);
       // controller.showSnackBar(
-      //     title: 'OTP is Incorrect',
-      //     content: e.toString(),
-      //     errorcolor: colorRed);
+      //   title: 'OTP is Incorrect',
+      //   content: e.toString(),
+      //  errorcolor: colorRed);
     }
   }
 }
