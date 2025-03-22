@@ -1,62 +1,97 @@
 // firbase/auth/auth.dart
-import 'package:ev_/firbase/db/db.dart';
-import 'package:ev_/model/usermodel.dart' as user;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:ev_/model/usermodel.dart';
 import 'package:ev_/firbase/db/db.dart';
 
-String verificationID = '';
-
 class AuthService {
-  static FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+  static final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  String _verificationId = '';
 
-  Future phoneNumberAuth(String phoneNumber) async {
-    firebaseAuth.verifyPhoneNumber(
-      phoneNumber: '+91$phoneNumber',
-      verificationCompleted: (phoneAuthCredential) async {
-        await firebaseAuth.signInWithCredential(phoneAuthCredential);
-      },
-      verificationFailed: (FirebaseAuthException e) {},
-      codeSent: (verificationId, forceResendingToken) {
-        verificationID = verificationId;
-        // loginScrnGetxController.isLoadingFN(isLoad: false);
-        // loginScrnGetxController.isOTPAllowFN(isOtpvalue: true);
-      },
-      codeAutoRetrievalTimeout: (verificationId) {},
-    );
+  Future<void> phoneNumberAuth(
+    String phoneNumber,
+    Function(bool) updateLoading,
+    Function(bool) updateOtpAllowed,
+    Function(String) onError,
+  ) async {
+    try {
+      updateLoading(true);
+
+      await _firebaseAuth.verifyPhoneNumber(
+        phoneNumber: '+91$phoneNumber',
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          // Auto-verification completed (usually on Android)
+          await _signInWithCredential(credential);
+          updateLoading(false);
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          updateLoading(false);
+          onError('Verification failed: ${e.message}');
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          _verificationId = verificationId;
+          updateLoading(false);
+          updateOtpAllowed(true);
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          _verificationId = verificationId;
+        },
+        timeout: const Duration(seconds: 60),
+      );
+    } catch (e) {
+      updateLoading(false);
+      onError('Error sending OTP: $e');
+    }
   }
 
-  Future otpverify(String oTPCode) async {
-    // loginScrnGetxController.isLoadingFN(isLoad: true);
-    PhoneAuthCredential credential = PhoneAuthProvider.credential(
-        verificationId: verificationID, smsCode: oTPCode);
+  Future<bool> verifyOtp(
+    String otpCode,
+    Function(bool) updateLoading,
+    Function(String) onError,
+  ) async {
+    try {
+      updateLoading(true);
+
+      if (_verificationId.isEmpty) {
+        updateLoading(false);
+        onError('Verification session expired. Please try again.');
+        return false;
+      }
+
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: _verificationId,
+        smsCode: otpCode,
+      );
+
+      return await _signInWithCredential(credential);
+    } catch (e) {
+      updateLoading(false);
+      onError('OTP verification failed: $e');
+      return false;
+    }
+  }
+
+  Future<bool> _signInWithCredential(PhoneAuthCredential credential) async {
     try {
       UserCredential userCredential =
-          await firebaseAuth.signInWithCredential(credential);
+          await _firebaseAuth.signInWithCredential(credential);
       User? user = userCredential.user;
-      UserModel userModel = UserModel(phonenumber: user!.phoneNumber ?? '');
+
       if (user != null) {
-        final result =
-            await DataBaseHandler(uid: user.uid).saveUserData(userModel);
-        // log('${user.email}::${user.phoneNumber}');
-        // if (snapshot == null) {
-        //   await DataBaseClass(uid: user.uid).saveUserdata(
-        //       phoneNumber: user.phoneNumber!, email: user.email ?? '');
-        //   sharedController.saveUserUIDStatus(user.uid);
-        //   Get.offAll(() => const DashboardScrn());
-        //   loginScrnGetxController.isLoadingFN(isLoad: false);
-        // } else {
-        //  sharedController.saveUserUIDStatus(user.uid);
-        //  loginScrnGetxController.isLoadingFN(isLoad: false);
-        //  Get.offAll(() => const DashboardScrn());
-        // }
+        UserModel userModel = UserModel(phonenumber: user.phoneNumber ?? '');
+        await DataBaseHandler(uid: user.uid).saveUserData(userModel);
+        return true;
       }
+      return false;
     } catch (e) {
-      //loginScrnGetxController.isLoadingFN(isLoad: false);
-      // controller.showSnackBar(
-      //   title: 'OTP is Incorrect',
-      //   content: e.toString(),
-      //  errorcolor: colorRed);
+      throw Exception('Sign-in failed: $e');
     }
+  }
+
+  User? getCurrentUser() {
+    return _firebaseAuth.currentUser;
+  }
+
+  Future<void> signOut() async {
+    await _firebaseAuth.signOut();
   }
 }
