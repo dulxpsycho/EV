@@ -2,6 +2,8 @@
 import 'package:ev_/firbase/db/db.dart';
 import 'package:ev_/model/usermodel.dart' as user;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:ev_/model/usermodel.dart';
+import 'package:ev_/firbase/db/db.dart';
 
 String verificationID = '';
 
@@ -32,19 +34,17 @@ class AuthService {
       UserCredential userCredential =
           await firebaseAuth.signInWithCredential(credential);
       User? user = userCredential.user;
-      final UserModel = user.UserModel(
-        phonenumber: user?.phoneNumber ?? '',
-      );
+      UserModel userModel = UserModel(phonenumber: user!.phoneNumber ?? '');
       if (user != null) {
         final result =
-            await DataBaseHandler(uid: user.uid).saveUserData(UserModel);
-        //log('${user.email}::${user.phoneNumber}');
-        //if (snapshot == null) {
-        // await DataBaseClass(uid: user.uid).saveUserdata(
-        //    phoneNumber: user.phoneNumber!, email: user.email ?? '');
-        // sharedController.saveUserUIDStatus(user.uid);
-        // Get.offAll(() => const DashboardScrn());
-        // loginScrnGetxController.isLoadingFN(isLoad: false);
+            await DataBaseHandler(uid: user.uid).saveUserData(userModel);
+        // log('${user.email}::${user.phoneNumber}');
+        // if (snapshot == null) {
+        //   await DataBaseClass(uid: user.uid).saveUserdata(
+        //       phoneNumber: user.phoneNumber!, email: user.email ?? '');
+        //   sharedController.saveUserUIDStatus(user.uid);
+        //   Get.offAll(() => const DashboardScrn());
+        //   loginScrnGetxController.isLoadingFN(isLoad: false);
         // } else {
         //  sharedController.saveUserUIDStatus(user.uid);
         //  loginScrnGetxController.isLoadingFN(isLoad: false);
