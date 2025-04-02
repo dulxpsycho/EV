@@ -1,9 +1,10 @@
 // Home.dart
 import 'dart:async';
 import 'dart:typed_data';
+import 'package:ev_/userfeedback.dart';
+import 'package:ev_/wallet.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ev_/AddFav.dart';
-import 'package:ev_/AddWall.dart';
 import 'package:ev_/Login.dart';
 import 'package:ev_/Partner.dart';
 import 'dart:convert';
@@ -13,12 +14,15 @@ import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
 import 'package:ev_/aboutus.dart';
 import 'package:ev_/addEv.dart';
-
-import 'package:google_fonts/google_fonts.dart';
-
-import 'package:google_nav_bar/google_nav_bar.dart';
-
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'startcharge.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:ev_/core/helper/shared_preference.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -148,7 +152,7 @@ class _MapScreenState extends State<MapScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color.fromARGB(0, 255, 255, 255),
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: const [
                   BoxShadow(
@@ -157,14 +161,6 @@ class _MapScreenState extends State<MapScreen> {
                     offset: Offset(0, 2),
                   ),
                 ],
-              ),
-              child: TextField(
-                controller: _searchController,
-                decoration: const InputDecoration(
-                  hintText: 'Search location...',
-                  border: InputBorder.none,
-                  prefixIcon: Icon(Icons.search),
-                ),
               ),
             ),
           ),
@@ -229,7 +225,7 @@ class _MapScreenState extends State<MapScreen> {
         'AIzaSyBA8i9tL9iEuwntDKd0jTHGM8kMKfE4Ltg'; // Replace with your API key
     String url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
         '?location=${_currentPosition!.latitude},${_currentPosition!.longitude}'
-        '&radius=20000' // 20 km radius
+        '&radius=30000' // 30 km radius
         '&keyword=electric+vehicle+charging+station'
         '&key=$apiKey';
 
@@ -418,6 +414,8 @@ class _MyEvScreenState extends State<MyEvScreen> {
 
 // Screen 3: ScanScreen
 
+// Import StartCharge page
+
 class MyQr extends StatefulWidget {
   const MyQr({super.key});
 
@@ -487,7 +485,7 @@ class _MyQrState extends State<MyQr> {
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton(
                 onPressed: () {
-                  // Action for a button (optional)
+                  // Optional button action
                 },
                 child: const Text("Learn More"),
               ),
@@ -545,8 +543,16 @@ class _MyQrState extends State<MyQr> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+
+                // Navigate to StartCharge page after scanning
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const StartCharge()),
+                );
+              },
+              child: const Text("Proceed to Charging"),
             ),
           ],
         );
@@ -556,23 +562,17 @@ class _MyQrState extends State<MyQr> {
 }
 
 // Screen 4: User Screen
-// Make sure to add this dependency in pubspec.yaml
+
+// Import SharedPreference for logout handling
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
 
-  // Navigation functions
-  void addcar(BuildContext context) {
+  // ✅ Navigation Functions
+  void addCar(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const AddEv()),
-    );
-  }
-
-  void addwallet(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AddWall()),
     );
   }
 
@@ -583,17 +583,29 @@ class MoreScreen extends StatelessWidget {
     );
   }
 
-  void addpart(BuildContext context) {
+  void addPart(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const PartnerWithUs()),
     );
   }
 
-  void addabt(BuildContext context) {
+  void addAbt(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const AddAbt()),
+    );
+  }
+
+  // ✅ Logout Function
+  Future<void> logout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isLoggedIn', false); // ✅ Clear user session
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+      (route) => false, // ✅ Remove all previous routes
     );
   }
 
@@ -606,7 +618,7 @@ class MoreScreen extends StatelessWidget {
             colors: [
               Color.fromARGB(255, 251, 251, 251),
               Color.fromARGB(255, 255, 255, 255),
-            ], // Subtle gradient for a minimal effect
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -617,7 +629,7 @@ class MoreScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header with Logo and Title
+                // ✅ Header with Logo and Title
                 Row(
                   children: [
                     const Icon(
@@ -642,44 +654,50 @@ class MoreScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 30),
 
-                // Wallet Item
+                // ✅ List of Options
                 Userlist(
                   icon: Icons.wallet,
-                  title: 'Wallet',
-                  onTap: () => addwallet(context),
+                  title: 'wallet',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MyWallet()),
+                  ),
                 ),
                 const SizedBox(height: 15),
 
-                // Favorites Item
                 Userlist(
-                  icon: Icons.favorite,
-                  title: 'Favorites',
-                  onTap: () => addFav(context),
+                    icon: Icons.favorite,
+                    title: 'Favorites',
+                    onTap: () => addFav(context)),
+                const SizedBox(height: 15),
+
+                Userlist(
+                    icon: Icons.handshake,
+                    title: 'Become a Partner',
+                    onTap: () => addPart(context)),
+                const SizedBox(height: 15),
+
+                Userlist(
+                    icon: Icons.info,
+                    title: 'About Us',
+                    onTap: () => addAbt(context)),
+                const SizedBox(height: 15),
+
+                Userlist(
+                  icon: Icons.feedback,
+                  title: 'Feedback',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const UserFeedbackScreen()),
+                  ),
                 ),
                 const SizedBox(height: 15),
 
-                // Partner Item
                 Userlist(
-                  icon: Icons.handshake,
-                  title: 'Become a Partner',
-                  onTap: () => addpart(context),
-                ),
-                const SizedBox(height: 15),
-
-                // About Us Item
-                Userlist(
-                  icon: Icons.info,
-                  title: 'About Us',
-                  onTap: () => addabt(context),
-                ),
-                const SizedBox(height: 15),
-
-                // Log Out Item
-                Userlist(
-                  icon: Icons.exit_to_app,
-                  title: 'Log Out',
-                  onTap: () => LoginPage(),
-                ),
+                    icon: Icons.exit_to_app,
+                    title: 'Log Out',
+                    onTap: () => logout(context)),
               ],
             ),
           ),
@@ -689,10 +707,11 @@ class MoreScreen extends StatelessWidget {
   }
 }
 
+// ✅ Userlist Widget
 class Userlist extends StatelessWidget {
   final IconData icon;
   final String title;
-  final Function onTap;
+  final VoidCallback onTap;
 
   const Userlist({
     super.key,
@@ -704,7 +723,7 @@ class Userlist extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => onTap(),
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
@@ -723,16 +742,15 @@ class Userlist extends StatelessWidget {
             Icon(
               icon,
               color: const Color.fromARGB(255, 249, 1, 1),
-              size: 28, // Slightly bigger icon for better visibility
+              size: 28,
             ),
             const SizedBox(width: 16),
             Text(
               title,
               style: GoogleFonts.roboto(
                 fontSize: 18,
-                color: const Color.fromARGB(
-                    255, 255, 1, 1), // Text color for visibility
-                fontWeight: FontWeight.w500, // Slightly bold font for contrast
+                color: const Color.fromARGB(255, 255, 1, 1),
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],

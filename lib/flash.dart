@@ -1,5 +1,7 @@
 // flash.dart
+import 'package:ev_/Home.dart';
 import 'package:ev_/Login.dart';
+import 'package:ev_/core/helper/shared_preference.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -27,8 +29,8 @@ class _MyFlashState extends State<MyFlash> with SingleTickerProviderStateMixin {
 
     // Color animation for flashing effect (White -> Red -> White)
     _colorAnimation = ColorTween(
-      begin: const Color.fromARGB(255, 255, 255, 255),
-      end: const Color.fromARGB(255, 255, 0, 0),
+      begin: Colors.white,
+      end: Colors.red,
     ).animate(_controller);
 
     // Opacity animation for flickering
@@ -37,13 +39,22 @@ class _MyFlashState extends State<MyFlash> with SingleTickerProviderStateMixin {
       TweenSequenceItem(tween: Tween(begin: 0.7, end: 1.0), weight: 50),
     ]).animate(_controller);
 
-    // Navigate to login page after 3 seconds
-    Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-      );
-    });
+    // Navigate after 3 seconds
+    _navigateToNextScreen();
+  }
+
+  Future<void> _navigateToNextScreen() async {
+    await Future.delayed(const Duration(seconds: 3)); // Wait for 3 seconds
+    final bool isLoggedIn = await SharedPreference.getLoggedIn() ?? false;
+
+    if (!mounted) return; // Ensure widget is still active
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => isLoggedIn ? const MyHome() : const LoginPage(),
+      ),
+    );
   }
 
   @override
@@ -66,8 +77,7 @@ class _MyFlashState extends State<MyFlash> with SingleTickerProviderStateMixin {
                 return Container(
                   padding: const EdgeInsets.all(20),
                   decoration: const BoxDecoration(
-                    color: Color.fromARGB(
-                        255, 255, 17, 0), // Red background for the logo
+                    color: Colors.red, // Red background for the logo
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -89,7 +99,7 @@ class _MyFlashState extends State<MyFlash> with SingleTickerProviderStateMixin {
                     style: TextStyle(
                       fontSize: 35,
                       fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 255, 255, 255), // White text
+                      color: Colors.white, // White text
                     ),
                   ),
                 );

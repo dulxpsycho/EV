@@ -1,12 +1,16 @@
 // main.dart
-
-import 'package:ev_/Home.dart';
+import 'package:ev_/Login.dart';
 import 'package:ev_/flash.dart';
-
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
   runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -20,7 +24,7 @@ class MyApp extends StatelessWidget {
       home: const MyFlash(),
       routes: {
         'Login': (context) => const MyFlash(),
-        'Home': (context) => const MyHome(),
+        'Home': (context) => const LoginPage(),
       },
     );
   }

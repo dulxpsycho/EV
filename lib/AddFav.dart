@@ -1,5 +1,6 @@
 // AddFav.dart
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AddFav extends StatefulWidget {
   const AddFav({super.key});
@@ -10,25 +11,76 @@ class AddFav extends StatefulWidget {
 
 class _AddFavState extends State<AddFav> {
   final TextEditingController _stationController = TextEditingController();
-  final List<String> _favoriteStations = [];
+  List<String> _favoriteStations = [];
 
-  void _toggleFavorite() {
-    if (_stationController.text.isNotEmpty) {
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _favoriteStations = prefs.getStringList('favoriteStations') ?? [];
+    });
+  }
+
+  Future<void> _saveFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('favoriteStations', _favoriteStations);
+  }
+
+  void _toggleFavorite(String station) {
+    if (station.isNotEmpty) {
       setState(() {
-        if (_favoriteStations.contains(_stationController.text)) {
-          _favoriteStations.remove(_stationController.text);
+        if (_favoriteStations.contains(station)) {
+          _favoriteStations.remove(station);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("'$station' removed from favorites!"),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
         } else {
-          _favoriteStations.add(_stationController.text);
+          _favoriteStations.add(station);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("'$station' added to favorites!"),
+              backgroundColor: Colors.green,
+            ),
+          );
         }
-        _stationController.clear();
       });
+      _saveFavorites();
     }
   }
 
   void _deleteStation(String station) {
-    setState(() {
-      _favoriteStations.remove(station);
-    });
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Remove Favorite?"),
+        content: Text("Are you sure you want to remove '$station'?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _favoriteStations.remove(station);
+              });
+              _saveFavorites();
+              Navigator.pop(context);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("Remove"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -37,11 +89,11 @@ class _AddFavState extends State<AddFav> {
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.green[700],
         title: const Text(
           'Favorite Stations',
           style: TextStyle(
-            color: Colors.black87,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -52,6 +104,7 @@ class _AddFavState extends State<AddFav> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Input Field
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -71,12 +124,13 @@ class _AddFavState extends State<AddFav> {
                   hintText: 'Enter station name',
                   hintStyle: TextStyle(color: Colors.grey[400]),
                   border: InputBorder.none,
-                  prefixIcon: const Icon(Icons.ev_station,
-                      color: Color.fromARGB(255, 255, 0, 0)),
+                  prefixIcon: const Icon(Icons.ev_station, color: Colors.green),
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.add,
-                        color: Color.fromARGB(255, 255, 0, 0)),
-                    onPressed: _toggleFavorite,
+                    icon: const Icon(Icons.add, color: Colors.green),
+                    onPressed: () {
+                      _toggleFavorite(_stationController.text);
+                      _stationController.clear();
+                    },
                   ),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -84,6 +138,8 @@ class _AddFavState extends State<AddFav> {
               ),
             ),
             const SizedBox(height: 20),
+
+            // Favorite List
             Expanded(
               child: _favoriteStations.isEmpty
                   ? Center(

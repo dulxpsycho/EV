@@ -1,44 +1,48 @@
 // model/usermodel.dart
 class UserModel {
   final String? id;
-  final String phonenumber;
+  final String email;
+  final String password;
   final String name;
-  final String? phonenumberError;
+  final String? emailError;
+  final String? passwordError;
   final String? nameError;
 
-  UserModel({
-    this.id,
-    required this.phonenumber,
-    this.name = '',
-    this.phonenumberError,
-    this.nameError,
-  });
-
-  UserModel copyWith({
-    String? id,
-    String? phonenumber,
-    String? name,
-    String? phonenumberError,
-    String? nameError,
-  }) {
+  UserModel(
+      {this.id,
+      this.name = '',
+      this.email = '',
+      this.password = '',
+      this.emailError,
+      this.passwordError,
+      this.nameError});
+  UserModel copyWith(
+      {String? id,
+      String? email,
+      String? password,
+      String? name,
+      String? emailError,
+      String? passwordError,
+      String? nameError}) {
     return UserModel(
-      id: id ?? this.id,
-      phonenumber: phonenumber ?? this.phonenumber,
-      name: name ?? this.name,
-      phonenumberError: phonenumberError,
-      nameError: nameError,
-    );
+        id: id ?? this.id,
+        email: email ?? this.email,
+        password: password ?? this.password,
+        name: name ?? this.name,
+        emailError: emailError,
+        passwordError: passwordError,
+        nameError: nameError);
   }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'phonenumber': '+91$phonenumber',
+      'email': email,
       'name': name,
     };
   }
 
   bool get isValid {
-    return phonenumberError == null && nameError == null;
+    return emailError == null && passwordError == null && nameError == null;
   }
 }
